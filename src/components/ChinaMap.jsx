@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const ECHARTS_CDN = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
-const CHINA_GEOJSON_URL =
-  'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';
+const CHINA_GEOJSON_URL = '/maps/china.json';
 
 function loadEcharts() {
   if (window.echarts) {
@@ -30,12 +29,21 @@ function ChinaMap() {
     async function initChart() {
       try {
         const echarts = await loadEcharts();
-        const geoJson = await fetch(CHINA_GEOJSON_URL).then((res) => {
-          if (!res.ok) {
-            throw new Error('中国 GeoJSON 数据加载失败');
-          }
-          return res.json();
-        });
+        const response = await fetch(CHINA_GEOJSON_URL);
+
+        if (!response.ok) {
+          throw new Error(`中国地图数据加载失败（HTTP ${response.status}）。请确认 /public/maps/china.json 文件存在且可访问。`);
+        }
+
+        const geoJson = await response.json();
+        const hasFeatures =
+          geoJson?.type === 'FeatureCollection' &&
+          Array.isArray(geoJson.features) &&
+          geoJson.features.length > 0;
+
+        if (!hasFeatures) {
+          throw new Error('中国地图数据格式无效：期望 FeatureCollection 且 features 非空。');
+        }
 
         if (!mounted || !chartRef.current) return;
 
@@ -76,7 +84,7 @@ function ChinaMap() {
         chartRef.current.__resizeHandler = resizeHandler;
       } catch (err) {
         if (mounted) {
-          setError(err.message || '地图初始化失败');
+          setError(err instanceof Error ? err.message : '地图初始化失败，请稍后重试。');
         }
       }
     }
