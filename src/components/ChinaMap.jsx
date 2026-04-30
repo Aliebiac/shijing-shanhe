@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 const ECHARTS_CDN = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
-const CHINA_GEOJSON_URL = '/maps/china.json';
+const CHINA_GEOJSON_URL = '/maps/china.geojson';
 
 function loadEcharts() {
   if (window.echarts) {
@@ -32,7 +32,7 @@ function ChinaMap() {
         const response = await fetch(CHINA_GEOJSON_URL);
 
         if (!response.ok) {
-          throw new Error(`中国地图数据加载失败（HTTP ${response.status}）。请确认 /public/maps/china.json 文件存在且可访问。`);
+          throw new Error(`中国地图数据加载失败（HTTP ${response.status}）。请确认 /public/maps/china.geojson 文件存在且可访问。`);
         }
 
         const geoJson = await response.json();
