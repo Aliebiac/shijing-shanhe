@@ -16,22 +16,47 @@
 
 ## 当前版本
 
-V0 原型版本：
+### V0：项目原型
 
-- 已搭建 React + Vite 项目框架。
-- 已部署到 Vercel。
-- 当前主要用于验证页面结构和部署流程。
+已完成基础网页结构，包含：
+
+- 项目标题
+- 简单页面布局
+- 底部分类标签占位
+- 基础样式
+
+### V1：二维中国地图
+
+已完成二维中国地图的基础显示，包含：
+
+- 集成 ECharts 地图库
+- 加载本地 China GeoJSON 地图数据
+- 显示中国地图轮廓
+- 支持地图拖动
+- 支持地图缩放
+- 隐藏地图文字标签
+- 关闭 hover tooltip
 
 ## 技术栈
 
 - React
 - Vite
-- JavaScript
+- ECharts
+- GeoJSON
 - CSS
-- Vercel
 
-## 本地运行
+## 项目结构
 
-```bash
-npm install
-npm run dev
+```text
+shijing-shanhe
+├── public
+│   └── maps
+│       ├── china.geojson
+│       └── china.json
+├── src
+│   ├── components
+│   ├── styles.css
+│   └── ...
+├── package.json
+├── vite.config.js
+└── README.md
