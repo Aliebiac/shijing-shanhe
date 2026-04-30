@@ -1,4 +1,5 @@
 import FilterBar from './components/FilterBar';
+import ChinaMap from './components/ChinaMap';
 import { categories } from './data/categories';
 
 function App() {
@@ -10,7 +11,7 @@ function App() {
       </header>
 
       <main className="map-section">
-        <div className="map-placeholder">地图区域（V0 占位）</div>
+        <ChinaMap />
       </main>
 
       <FilterBar categories={categories} />

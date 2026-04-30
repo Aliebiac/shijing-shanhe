@@ -39,16 +39,24 @@ body {
   display: flex;
 }
 
-.map-placeholder {
+.china-map {
   width: 100%;
   min-height: 420px;
-  border: 2px dashed #9ca3af;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+}
+
+.map-error {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid #fecaca;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
-  background: white;
+  color: #b91c1c;
+  background: #fff7f7;
 }
 
 .filter-bar {
