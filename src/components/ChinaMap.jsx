@@ -55,8 +55,8 @@ function ChinaMap() {
         chart.setOption({
           backgroundColor: 'transparent',
           tooltip: {
+            show: false,
             trigger: 'item',
-            formatter: '{b}',
           },
           geo: {
             map: 'china2d',
@@ -71,6 +71,9 @@ function ChinaMap() {
               borderWidth: 1,
             },
             emphasis: {
+              label: {
+                show: false,
+              },
               itemStyle: {
                 areaColor: '#cbd5e1',
               },
