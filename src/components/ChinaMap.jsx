@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const ECHARTS_CDN = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
 const CHINA_GEOJSON_URL = '/maps/china.geojson';
@@ -18,10 +18,21 @@ function loadEcharts() {
   });
 }
 
-function ChinaMap() {
+function ChinaMap({ poems, activeCategory }) {
   const chartRef = useRef(null);
   const instanceRef = useRef(null);
   const [error, setError] = useState('');
+  const [selectedPoem, setSelectedPoem] = useState(null);
+
+  const mapData = useMemo(
+    () =>
+      poems.map((poem) => ({
+        ...poem,
+        name: poem.title,
+        value: [poem.longitude, poem.latitude],
+      })),
+    [poems]
+  );
 
   useEffect(() => {
     let mounted = true;
@@ -52,39 +63,15 @@ function ChinaMap() {
         const chart = echarts.init(chartRef.current);
         instanceRef.current = chart;
 
-        chart.setOption({
-          backgroundColor: 'transparent',
-          tooltip: {
-            show: false,
-            trigger: 'item',
-          },
-          geo: {
-            map: 'china2d',
-            roam: true,
-            zoom: 1.08,
-            label: {
-              show: false,
-            },
-            itemStyle: {
-              areaColor: '#e2e8f0',
-              borderColor: '#64748b',
-              borderWidth: 1,
-            },
-            emphasis: {
-              label: {
-                show: false,
-              },
-              itemStyle: {
-                areaColor: '#cbd5e1',
-              },
-            },
-          },
-          series: [],
-        });
-
         const resizeHandler = () => chart.resize();
         window.addEventListener('resize', resizeHandler);
         chartRef.current.__resizeHandler = resizeHandler;
+
+        chart.on('click', (params) => {
+          if (params?.seriesType === 'scatter' && params.data) {
+            setSelectedPoem(params.data);
+          }
+        });
       } catch (err) {
         if (mounted) {
           setError(err instanceof Error ? err.message : '地图初始化失败，请稍后重试。');
@@ -103,11 +90,93 @@ function ChinaMap() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!instanceRef.current) return;
+
+    instanceRef.current.setOption({
+      backgroundColor: 'transparent',
+      tooltip: { show: false },
+      geo: {
+        map: 'china2d',
+        roam: true,
+        zoom: 1.08,
+        label: { show: false },
+        itemStyle: {
+          areaColor: '#e2e8f0',
+          borderColor: '#64748b',
+          borderWidth: 1,
+        },
+        emphasis: {
+          label: { show: false },
+          itemStyle: { areaColor: '#cbd5e1' },
+        },
+      },
+      series: [
+        {
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: mapData,
+          symbol: 'circle',
+          symbolSize: 11,
+          itemStyle: {
+            color: '#60a5fa',
+            borderColor: '#1d4ed8',
+            borderWidth: 1,
+            opacity: activeCategory === 'all' ? 1 : 0.25,
+          },
+          emphasis: { scale: 1.2, itemStyle: { opacity: 1 } },
+          tooltip: {
+            show: true,
+            trigger: 'item',
+            formatter: (params) => params.data.title,
+            extraCssText: 'padding:6px 8px;',
+          },
+        },
+        {
+          type: 'scatter',
+          coordinateSystem: 'geo',
+          data: activeCategory === 'all' ? [] : mapData.filter((item) => item.category === activeCategory),
+          symbol: 'circle',
+          symbolSize: 14,
+          itemStyle: {
+            color: '#ef4444',
+            borderColor: '#991b1b',
+            borderWidth: 1.5,
+            opacity: 1,
+          },
+          tooltip: {
+            show: true,
+            trigger: 'item',
+            formatter: (params) => params.data.title,
+            extraCssText: 'padding:6px 8px;',
+          },
+          zlevel: 2,
+        },
+      ],
+    });
+  }, [mapData, activeCategory]);
+
   if (error) {
     return <div className="map-error">{error}</div>;
   }
 
-  return <div ref={chartRef} className="china-map" aria-label="中国地图" />;
+  return (
+    <div className="map-wrapper">
+      <div ref={chartRef} className="china-map" aria-label="中国地图" />
+      {selectedPoem && (
+        <aside className="poem-info-box">
+          <button type="button" className="info-close" onClick={() => setSelectedPoem(null)}>
+            ×
+          </button>
+          <h3>{selectedPoem.title}</h3>
+          <p>分类：{selectedPoem.category}</p>
+          <p>地点：{selectedPoem.locationName}</p>
+          <p>备注：{selectedPoem.note}</p>
+          <p>诗文内容将在后续版本加入。</p>
+        </aside>
+      )}
+    </div>
+  );
 }
 
 export default ChinaMap;
