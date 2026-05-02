@@ -23,6 +23,7 @@ function ChinaMap({ poems, activeCategory }) {
   const instanceRef = useRef(null);
   const [error, setError] = useState('');
   const [selectedPoem, setSelectedPoem] = useState(null);
+  const [chartReady, setChartReady] = useState(false);
 
   const mapData = useMemo(
     () =>
@@ -63,6 +64,27 @@ function ChinaMap({ poems, activeCategory }) {
         const chart = echarts.init(chartRef.current);
         instanceRef.current = chart;
 
+        chart.setOption({
+          backgroundColor: 'transparent',
+          tooltip: { show: false },
+          geo: {
+            map: 'china2d',
+            roam: true,
+            zoom: 1.08,
+            label: { show: false },
+            itemStyle: {
+              areaColor: '#e2e8f0',
+              borderColor: '#64748b',
+              borderWidth: 1,
+            },
+            emphasis: {
+              label: { show: false },
+              itemStyle: { areaColor: '#cbd5e1' },
+            },
+          },
+        });
+        setChartReady(true);
+
         const resizeHandler = () => chart.resize();
         window.addEventListener('resize', resizeHandler);
         chartRef.current.__resizeHandler = resizeHandler;
@@ -91,26 +113,9 @@ function ChinaMap({ poems, activeCategory }) {
   }, []);
 
   useEffect(() => {
-    if (!instanceRef.current) return;
+    if (!instanceRef.current || !chartReady) return;
 
     instanceRef.current.setOption({
-      backgroundColor: 'transparent',
-      tooltip: { show: false },
-      geo: {
-        map: 'china2d',
-        roam: true,
-        zoom: 1.08,
-        label: { show: false },
-        itemStyle: {
-          areaColor: '#e2e8f0',
-          borderColor: '#64748b',
-          borderWidth: 1,
-        },
-        emphasis: {
-          label: { show: false },
-          itemStyle: { areaColor: '#cbd5e1' },
-        },
-      },
       series: [
         {
           type: 'scatter',
@@ -122,7 +127,7 @@ function ChinaMap({ poems, activeCategory }) {
             color: '#60a5fa',
             borderColor: '#1d4ed8',
             borderWidth: 1,
-            opacity: activeCategory === 'all' ? 1 : 0.25,
+            opacity: activeCategory === 'all' ? 0.25 : 0.2,
           },
           emphasis: { scale: 1.2, itemStyle: { opacity: 1 } },
           tooltip: {
@@ -153,8 +158,8 @@ function ChinaMap({ poems, activeCategory }) {
           zlevel: 2,
         },
       ],
-    });
-  }, [mapData, activeCategory]);
+    }, { replaceMerge: ['series'] });
+  }, [mapData, activeCategory, chartReady]);
 
   if (error) {
     return <div className="map-error">{error}</div>;
