@@ -1,8 +1,20 @@
+import { useMemo, useState } from 'react';
 import FilterBar from './components/FilterBar';
 import ChinaMap from './components/ChinaMap';
 import { categories } from './data/categories';
+import { poems } from './data/poems';
 
 function App() {
+  const [activeCategory, setActiveCategory] = useState('all');
+
+  const mapCategory = useMemo(() => {
+    const selected = categories.find((item) => item.id === activeCategory);
+    if (!selected || selected.label === '全部') {
+      return 'all';
+    }
+    return selected.label;
+  }, [activeCategory]);
+
   return (
     <div className="page">
       <header className="hero">
@@ -11,10 +23,14 @@ function App() {
       </header>
 
       <main className="map-section">
-        <ChinaMap />
+        <ChinaMap poems={poems} activeCategory={mapCategory} />
       </main>
 
-      <FilterBar categories={categories} />
+      <FilterBar
+        categories={categories}
+        activeCategory={activeCategory}
+        onCategoryChange={setActiveCategory}
+      />
     </div>
   );
 }

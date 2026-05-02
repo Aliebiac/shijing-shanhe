@@ -39,12 +39,49 @@ body {
   display: flex;
 }
 
+.map-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .china-map {
   width: 100%;
   min-height: 420px;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   background: white;
+}
+
+.poem-info-box {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: min(320px, calc(100% - 32px));
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.poem-info-box h3 {
+  margin: 0 0 10px;
+}
+
+.poem-info-box p {
+  margin: 6px 0;
+  line-height: 1.45;
+}
+
+.info-close {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  border: none;
+  background: transparent;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #6b7280;
 }
 
 .map-error {
@@ -72,4 +109,10 @@ body {
   background: white;
   cursor: pointer;
   font-size: 1rem;
+}
+
+.filter-button.active {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
 }
