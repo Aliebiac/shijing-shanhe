@@ -2,6 +2,31 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 const ECHARTS_CDN = 'https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js';
 const CHINA_GEOJSON_URL = '/maps/china.geojson';
+const RIVERS_GEOJSON_URL = '/maps/chinese-rivers-filtered.geojson';
+
+function geoJsonToLineData(geoJson) {
+  if (!geoJson?.features || !Array.isArray(geoJson.features)) {
+    return [];
+  }
+
+  return geoJson.features.flatMap((feature) => {
+    const geometry = feature?.geometry;
+    const name = feature?.properties?.name_zh || feature?.properties?.name || 'river';
+
+    if (geometry?.type === 'LineString') {
+      return [{ name, coords: geometry.coordinates }];
+    }
+
+    if (geometry?.type === 'MultiLineString') {
+      return geometry.coordinates.map((coords, index) => ({
+        name: `${name}-${index}`,
+        coords,
+      }));
+    }
+
+    return [];
+  });
+}
 
 function loadEcharts() {
   if (window.echarts) {
@@ -24,6 +49,7 @@ function ChinaMap({ poems, activeCategory }) {
   const [error, setError] = useState('');
   const [selectedPoem, setSelectedPoem] = useState(null);
   const [chartReady, setChartReady] = useState(false);
+  const [riverLines, setRiverLines] = useState([]);
 
   const mapData = useMemo(
     () =>
@@ -41,13 +67,20 @@ function ChinaMap({ poems, activeCategory }) {
     async function initChart() {
       try {
         const echarts = await loadEcharts();
-        const response = await fetch(CHINA_GEOJSON_URL);
+        const [response, riversResponse] = await Promise.all([
+          fetch(CHINA_GEOJSON_URL),
+          fetch(RIVERS_GEOJSON_URL),
+        ]);
 
         if (!response.ok) {
           throw new Error(`中国地图数据加载失败（HTTP ${response.status}）。请确认 /public/maps/china.geojson 文件存在且可访问。`);
         }
 
-        const geoJson = await response.json();
+        if (!riversResponse.ok) {
+          throw new Error(`河流图层数据加载失败（HTTP ${riversResponse.status}）。请确认 /public/maps/chinese-rivers-filtered.geojson 文件存在且可访问。`);
+        }
+
+        const [geoJson, riversGeoJson] = await Promise.all([response.json(), riversResponse.json()]);
         const hasFeatures =
           geoJson?.type === 'FeatureCollection' &&
           Array.isArray(geoJson.features) &&
@@ -58,6 +91,8 @@ function ChinaMap({ poems, activeCategory }) {
         }
 
         if (!mounted || !chartRef.current) return;
+
+        const riverLineData = geoJsonToLineData(riversGeoJson);
 
         echarts.registerMap('china2d', geoJson);
 
@@ -83,6 +118,7 @@ function ChinaMap({ poems, activeCategory }) {
             },
           },
         });
+        setRiverLines(riverLineData);
         setChartReady(true);
 
         const resizeHandler = () => chart.resize();
@@ -118,6 +154,22 @@ function ChinaMap({ poems, activeCategory }) {
     instanceRef.current.setOption({
       series: [
         {
+          type: 'lines',
+          coordinateSystem: 'geo',
+          polyline: true,
+          data: riverLines,
+          silent: true,
+          symbol: 'none',
+          lineStyle: {
+            color: '#2563eb',
+            width: 0.8,
+            opacity: 0.28,
+          },
+          emphasis: { disabled: true },
+          tooltip: { show: false },
+          z: 1,
+        },
+        {
           type: 'scatter',
           coordinateSystem: 'geo',
           data: mapData,
@@ -131,6 +183,7 @@ function ChinaMap({ poems, activeCategory }) {
           },
           emphasis: { scale: 1.2, itemStyle: { opacity: 1 } },
           tooltip: { show: false },
+          z: 5,
         },
         {
           type: 'scatter',
@@ -195,7 +248,7 @@ function ChinaMap({ poems, activeCategory }) {
         },
       ],
     }, { replaceMerge: ['series'] });
-  }, [mapData, activeCategory, chartReady]);
+  }, [mapData, activeCategory, chartReady, riverLines]);
 
   if (error) {
     return <div className="map-error">{error}</div>;
